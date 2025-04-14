@@ -1,8 +1,7 @@
 import { DateTime } from 'luxon'
 import { BaseModel, column, hasMany, hasOne } from '@adonisjs/lucid/orm'
-import type { HasMany, HasOne } from '@adonisjs/lucid/types/relations'
+import type { HasMany } from '@adonisjs/lucid/types/relations'
 import Pedido from './pedido.js'
-import Sede from './sede.js'
 
 export default class Campaign extends BaseModel {
   @column({ isPrimary: true })
