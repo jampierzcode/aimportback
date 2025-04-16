@@ -155,16 +155,14 @@ export default class PedidosController {
 
       await PedidoStatus.createMany(pedidosStatus) // Guardar las asociaciones en la tabla intermedia
 
-      pedidos.map(async (pedido) => {
-        const data = {
-          status: 'recepcionado',
+      // Actualizar cada pedido correctamente
+      for (const pedido of pedidos) {
+        const pedidoData = await Pedido.query().where('id_solicitante', pedido).first()
+        if (pedidoData) {
+          pedidoData.merge({ status: 'recepcionado' })
+          await pedidoData.save()
         }
-        const newData = await Pedido.query().where('id_solicitante', pedido).first()
-        if (newData) {
-          newData.merge(data)
-          await newData.save()
-        }
-      })
+      }
       return {
         status: 'success',
         message: 'pedidos update successfully',
@@ -195,17 +193,15 @@ export default class PedidosController {
       }))
 
       await PedidoStatus.createMany(pedidosStatus) // Guardar las asociaciones en la tabla intermedia
+      // Actualizar cada pedido correctamente
+      for (const pedido of pedidos) {
+        const pedidoData = await Pedido.query().where('id_solicitante', pedido).first()
+        if (pedidoData) {
+          pedidoData.merge({ status: 'en camino' })
+          await pedidoData.save()
+        }
+      }
 
-      pedidos.map(async (pedido) => {
-        const data = {
-          status: 'en camino',
-        }
-        const newData = await Pedido.query().where('id_solicitante', pedido).first()
-        if (newData) {
-          newData.merge(data)
-          await newData.save()
-        }
-      })
       return {
         status: 'success',
         message: 'pedidos en camino update successfully',
@@ -237,16 +233,14 @@ export default class PedidosController {
 
       await PedidoStatus.createMany(pedidosStatus) // Guardar las asociaciones en la tabla intermedia
 
-      pedidos.map(async (pedido) => {
-        const data = {
-          status: 'en almacen',
+      // Actualizar cada pedido correctamente
+      for (const pedido of pedidos) {
+        const pedidoData = await Pedido.query().where('id_solicitante', pedido).first()
+        if (pedidoData) {
+          pedidoData.merge({ status: 'en almacen' })
+          await pedidoData.save()
         }
-        const newData = await Pedido.query().where('id_solicitante', pedido).first()
-        if (newData) {
-          newData.merge(data)
-          await newData.save()
-        }
-      })
+      }
       return {
         status: 'success',
         message: 'pedidos en camino update successfully',
@@ -284,16 +278,14 @@ export default class PedidosController {
 
       await PedidoAsignado.createMany(pedidosAsignados) // Guardar las asociaciones en la tabla intermedia
 
-      pedidos.map(async (pedido) => {
-        const data = {
-          status: 'en reparto',
+      // Actualizar cada pedido correctamente
+      for (const pedido of pedidos) {
+        const pedidoData = await Pedido.query().where('id_solicitante', pedido).first()
+        if (pedidoData) {
+          pedidoData.merge({ status: 'en reparto' })
+          await pedidoData.save()
         }
-        const newData = await Pedido.query().where('id_solicitante', pedido).first()
-        if (newData) {
-          newData.merge(data)
-          await newData.save()
-        }
-      })
+      }
       return {
         status: 'success',
         message: 'pedidos en camino update successfully',
