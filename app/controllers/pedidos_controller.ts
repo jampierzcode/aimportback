@@ -91,6 +91,49 @@ export default class PedidosController {
       }
     }
   }
+  public async pedidosMasiveByCampaign({ request }: HttpContext) {
+    try {
+      const { campaign_id, pedidos } = request.only(['campaign_id', 'pedidos'])
+
+      if (!campaign_id || !Array.isArray(pedidos) || pedidos.length === 0) {
+        return {
+          status: 'error',
+          message: 'Faltan datos o la lista de pedidos está vacía',
+        }
+      }
+      // 📌 Agregar el ID de la campaña a cada pedido
+      const pedidosInsert = pedidos.map((pedido) => ({
+        id_solicitante: pedido.id_solicitante,
+        nombre_solicitante: pedido.nombre_solicitante,
+        direccion: pedido.direccion,
+        referencia: pedido.referencia,
+        celular: pedido.celular,
+        ubigeo: pedido.ubigeo,
+        marca: pedido.marca,
+        num_cajas: pedido.num_cajas,
+        status: 'registrado',
+        origen_id: pedido.origen_id,
+        destino_id: pedido.destino_id,
+        campaign_id: campaign_id,
+      }))
+
+      console.log(pedidosInsert)
+
+      // 📌 Insertar pedidos masivamente con createMany
+      await Pedido.createMany(pedidosInsert)
+
+      return {
+        status: 'success',
+        message: 'pedidos deleted successfully',
+      }
+    } catch (error) {
+      return {
+        status: 'error',
+        message: 'pedidos no se subieron correctamente',
+        error: error,
+      }
+    }
+  }
   public async senDataPedidosCargadaMasive({ request }: HttpContext) {
     try {
       const { pedidos } = request.only(['pedidos'])
