@@ -60,6 +60,9 @@ router.put('/api/pedidos/:id', [PedidosController, 'update']).as('pedido.update'
 router.delete('/api/pedidos/:id', [PedidosController, 'destroy']).as('pedido.destroy')
 router.post('/api/pedidosMasive', [PedidosController, 'pedidosMasive']).as('pedido.pedidosMasive')
 router
+  .post('/api/pedidosMasiveByCampaign', [PedidosController, 'pedidosMasiveByCampaign'])
+  .as('pedido.pedidosMasiveByCampaign')
+router
   .post('/api/senDataPedidosCargadaMasive', [PedidosController, 'senDataPedidosCargadaMasive'])
   .as('pedido.senDataPedidosCargadaMasive')
 
