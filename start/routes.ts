@@ -65,6 +65,15 @@ router
 router
   .post('/api/senDataPedidosCargadaMasive', [PedidosController, 'senDataPedidosCargadaMasive'])
   .as('pedido.senDataPedidosCargadaMasive')
+router
+  .post('/api/senDataPedidosEnCaminoMasive', [PedidosController, 'senDataPedidosEnCaminoMasive'])
+  .as('pedido.senDataPedidosEnCaminoMasive')
+router
+  .post('/api/senDataPedidosEnAlmacenMasive', [PedidosController, 'senDataPedidosEnAlmacenMasive'])
+  .as('pedido.senDataPedidosEnAlmacenMasive')
+router
+  .post('/api/senDataPedidosEnRepartoMasive', [PedidosController, 'senDataPedidosEnRepartoMasive'])
+  .as('pedido.senDataPedidosEnRepartoMasive')
 
 // RUTAS PARA campaign
 router.get('/api/campaigns', [CampaignsController, 'index']).as('campaign.index')

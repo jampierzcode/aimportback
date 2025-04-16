@@ -1,5 +1,7 @@
 import Campaign from '#models/campaign'
 import Pedido from '#models/pedido'
+import PedidoAsignado from '#models/pedido_asignado'
+import PedidoStatus from '#models/pedido_status'
 import type { HttpContext } from '@adonisjs/core/http'
 
 export default class PedidosController {
@@ -134,7 +136,8 @@ export default class PedidosController {
       }
     }
   }
-  public async senDataPedidosCargadaMasive({ request }: HttpContext) {
+  public async senDataPedidosCargadaMasive({ request, auth }: HttpContext) {
+    await auth.check()
     try {
       const { pedidos } = request.only(['pedidos'])
 
@@ -144,6 +147,14 @@ export default class PedidosController {
           message: 'La lista de pedidos está vacía',
         }
       }
+      const pedidosStatus = pedidos.map((p) => ({
+        pedido_id: p,
+        status: 'recepcionado',
+        user_id: auth.user!.id,
+      }))
+
+      await PedidoStatus.createMany(pedidosStatus) // Guardar las asociaciones en la tabla intermedia
+
       pedidos.map(async (pedido) => {
         const data = {
           status: 'recepcionado',
@@ -157,6 +168,135 @@ export default class PedidosController {
       return {
         status: 'success',
         message: 'pedidos update successfully',
+      }
+    } catch (error) {
+      return {
+        status: 'error',
+        message: 'pedidos no se actualizaron correctamente',
+        error: error,
+      }
+    }
+  }
+  public async senDataPedidosEnCaminoMasive({ request, auth }: HttpContext) {
+    await auth.check()
+    try {
+      const { pedidos } = request.only(['pedidos'])
+
+      if (!Array.isArray(pedidos) || pedidos.length === 0) {
+        return {
+          status: 'error',
+          message: 'La lista de pedidos está vacía',
+        }
+      }
+      const pedidosStatus = pedidos.map((p) => ({
+        pedido_id: p,
+        status: 'en camino',
+        user_id: auth.user!.id,
+      }))
+
+      await PedidoStatus.createMany(pedidosStatus) // Guardar las asociaciones en la tabla intermedia
+
+      pedidos.map(async (pedido) => {
+        const data = {
+          status: 'en camino',
+        }
+        const newData = await Pedido.query().where('id_solicitante', pedido).first()
+        if (newData) {
+          newData.merge(data)
+          await newData.save()
+        }
+      })
+      return {
+        status: 'success',
+        message: 'pedidos en camino update successfully',
+      }
+    } catch (error) {
+      return {
+        status: 'error',
+        message: 'pedidos no se actualizaron correctamente',
+        error: error,
+      }
+    }
+  }
+  public async senDataPedidosEnAlmacenMasive({ request, auth }: HttpContext) {
+    await auth.check()
+    try {
+      const { pedidos } = request.only(['pedidos'])
+
+      if (!Array.isArray(pedidos) || pedidos.length === 0) {
+        return {
+          status: 'error',
+          message: 'La lista de pedidos está vacía',
+        }
+      }
+      const pedidosStatus = pedidos.map((p) => ({
+        pedido_id: p,
+        status: 'en almacen',
+        user_id: auth.user!.id,
+      }))
+
+      await PedidoStatus.createMany(pedidosStatus) // Guardar las asociaciones en la tabla intermedia
+
+      pedidos.map(async (pedido) => {
+        const data = {
+          status: 'en almacen',
+        }
+        const newData = await Pedido.query().where('id_solicitante', pedido).first()
+        if (newData) {
+          newData.merge(data)
+          await newData.save()
+        }
+      })
+      return {
+        status: 'success',
+        message: 'pedidos en camino update successfully',
+      }
+    } catch (error) {
+      return {
+        status: 'error',
+        message: 'pedidos no se actualizaron correctamente',
+        error: error,
+      }
+    }
+  }
+  public async senDataPedidosEnRepartoMasive({ request, auth }: HttpContext) {
+    await auth.check()
+    try {
+      const { pedidos, repartidor_id } = request.only(['pedidos', 'repartidor_id'])
+
+      if (!Array.isArray(pedidos) || pedidos.length === 0) {
+        return {
+          status: 'error',
+          message: 'La lista de pedidos está vacía',
+        }
+      }
+      const pedidosStatus = pedidos.map((p) => ({
+        pedido_id: p,
+        status: 'en reparto',
+        user_id: auth.user!.id,
+      }))
+
+      await PedidoStatus.createMany(pedidosStatus) // Guardar las asociaciones en la tabla intermedia
+      const pedidosAsignados = pedidos.map((p) => ({
+        pedido_id: p,
+        repartidor_id: repartidor_id,
+      }))
+
+      await PedidoAsignado.createMany(pedidosAsignados) // Guardar las asociaciones en la tabla intermedia
+
+      pedidos.map(async (pedido) => {
+        const data = {
+          status: 'en reparto',
+        }
+        const newData = await Pedido.query().where('id_solicitante', pedido).first()
+        if (newData) {
+          newData.merge(data)
+          await newData.save()
+        }
+      })
+      return {
+        status: 'success',
+        message: 'pedidos en camino update successfully',
       }
     } catch (error) {
       return {
