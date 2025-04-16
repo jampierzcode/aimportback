@@ -25,6 +25,7 @@ export default class PedidosController {
       .where('id_solicitante', params.id_solicitante)
       .preload('origen')
       .preload('destino')
+      .preload('status_pedido')
       .first()
     console.log(pedido)
     return pedido
