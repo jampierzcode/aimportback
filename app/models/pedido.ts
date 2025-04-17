@@ -3,6 +3,7 @@ import { BaseModel, belongsTo, column, hasMany } from '@adonisjs/lucid/orm'
 import Sede from './sede.js'
 import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
 import PedidoStatus from './pedido_status.js'
+import PedidoMultimedia from './pedido_multimedia.js'
 
 export default class Pedido extends BaseModel {
   @column({ isPrimary: true })
@@ -55,6 +56,12 @@ export default class Pedido extends BaseModel {
     foreignKey: 'pedido_id',
   })
   public status_pedido!: HasMany<typeof PedidoStatus>
+
+  // Relación con pedidos multimedia
+  @hasMany(() => PedidoMultimedia, {
+    foreignKey: 'pedido_id',
+  })
+  public multimedia!: HasMany<typeof PedidoMultimedia>
 
   @column()
   declare destino_id: number

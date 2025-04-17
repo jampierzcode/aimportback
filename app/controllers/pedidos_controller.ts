@@ -1,6 +1,7 @@
 import Campaign from '#models/campaign'
 import Pedido from '#models/pedido'
 import PedidoAsignado from '#models/pedido_asignado'
+import PedidoMultimedia from '#models/pedido_multimedia'
 import PedidoStatus from '#models/pedido_status'
 import type { HttpContext } from '@adonisjs/core/http'
 
@@ -26,9 +27,20 @@ export default class PedidosController {
       .preload('origen')
       .preload('destino')
       .preload('status_pedido')
+      .preload('multimedia')
       .first()
     console.log(pedido)
     return pedido
+  }
+  public async pedidoByRepartidor({ params }: HttpContext) {
+    console.log(params)
+    const pedidos = await PedidoAsignado.query()
+      .where('repartidor_id', params.id)
+      .preload('pedido', (pedidoQuery) => {
+        pedidoQuery.preload('origen').preload('destino').preload('multimedia')
+      })
+    console.log(pedidos)
+    return pedidos
   }
 
   // Crear un nuevo pedido (POST /plans)
@@ -90,6 +102,38 @@ export default class PedidosController {
       return {
         status: 'error',
         message: 'pedidos no se subieron correctamente',
+        error: error,
+      }
+    }
+  }
+  public async pedidosMultimedia({ request }: HttpContext) {
+    try {
+      const { files, pedido_id } = request.only(['pedido_id', 'files'])
+
+      if (!pedido_id || !Array.isArray(files) || files.length === 0) {
+        return {
+          status: 'error',
+          message: 'Faltan datos o la lista de imagenes está vacía',
+        }
+      }
+      // 📌 Agregar el ID de la campaña a cada pedido
+      const pedidosMultimedia = files.map((file) => ({
+        pedido_id: pedido_id,
+        url: file.url,
+        type: 'image',
+      }))
+
+      // 📌 Insertar pedidos masivamente con createMany
+      await PedidoMultimedia.createMany(pedidosMultimedia)
+
+      return {
+        status: 'success',
+        message: 'pedidos multimedia successfully',
+      }
+    } catch (error) {
+      return {
+        status: 'error',
+        message: 'pedidos multimedia no se subieron correctamente',
         error: error,
       }
     }
@@ -302,23 +346,35 @@ export default class PedidosController {
 
   // Actualizar un plan existente (PUT /plans/:id)
   public async update({ params, request }: HttpContext) {
-    const pedido = await Pedido.findOrFail(params.id)
-    const data = request.only([
-      'id_solicitante',
-      'nombre_solicitante',
-      'direccion',
-      'referencia',
-      'celular',
-      'ubigeo',
-      'marca',
-      'num_cajas',
-      'status',
-      'origen_id',
-      'destino_id',
-    ]) // Asume que estos campos existen
-    pedido.merge(data)
-    await pedido.save()
-    return pedido
+    try {
+      const pedido = await Pedido.findOrFail(params.id)
+      const data = request.only([
+        'id_solicitante',
+        'nombre_solicitante',
+        'direccion',
+        'referencia',
+        'celular',
+        'ubigeo',
+        'marca',
+        'num_cajas',
+        'status',
+        'origen_id',
+        'destino_id',
+      ]) // Asume que estos campos existen
+      pedido.merge(data)
+      await pedido.save()
+
+      return {
+        status: 'success',
+        message: 'pedidos multimedia update successfully',
+      }
+    } catch (error) {
+      return {
+        status: 'error',
+        message: 'pedidos multimedia no se actualizaron correctamente',
+        error: error,
+      }
+    }
   }
 
   // Eliminar un pedido (DELETE /plans/:id)

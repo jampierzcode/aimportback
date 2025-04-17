@@ -55,10 +55,16 @@ router.get('/api/pedidos/:id', [PedidosController, 'show']).as('pedido.show')
 router
   .get('/api/pedidoByTracking/:id_solicitante', [PedidosController, 'pedidoByTracking'])
   .as('pedido.pedidoByTracking')
+router
+  .get('/api/pedidoByRepartidor/:id', [PedidosController, 'pedidoByRepartidor'])
+  .as('pedido.pedidoByRepartidor')
 router.post('/api/pedidos', [PedidosController, 'store']).as('pedido.store')
 router.put('/api/pedidos/:id', [PedidosController, 'update']).as('pedido.update')
 router.delete('/api/pedidos/:id', [PedidosController, 'destroy']).as('pedido.destroy')
 router.post('/api/pedidosMasive', [PedidosController, 'pedidosMasive']).as('pedido.pedidosMasive')
+router
+  .post('/api/pedidosMultimedia', [PedidosController, 'pedidosMultimedia'])
+  .as('pedido.pedidosMultimedia')
 router
   .post('/api/pedidosMasiveByCampaign', [PedidosController, 'pedidosMasiveByCampaign'])
   .as('pedido.pedidosMasiveByCampaign')
