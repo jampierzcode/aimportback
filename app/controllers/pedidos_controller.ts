@@ -29,7 +29,6 @@ export default class PedidosController {
       .preload('status_pedido')
       .preload('multimedia')
       .first()
-    console.log(pedido)
     return pedido
   }
   public async pedidoByRepartidor({ params }: HttpContext) {
