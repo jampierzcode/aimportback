@@ -21,6 +21,7 @@ router.get('/', async () => {
     hello: 'world',
   }
 })
+router.post('/api/updatePassword', [AuthController, 'updatePassword']).as('auth.updatePassword')
 router.post('/api/register', [AuthController, 'register']).as('auth.register')
 router.post('/api/newuser', [AuthController, 'createUser']).as('auth.createUser')
 router.post('/api/login', [AuthController, 'login']).as('auth.login')
@@ -65,6 +66,9 @@ router.post('/api/pedidosMasive', [PedidosController, 'pedidosMasive']).as('pedi
 router
   .post('/api/pedidosMultimedia', [PedidosController, 'pedidosMultimedia'])
   .as('pedido.pedidosMultimedia')
+router
+  .post('/api/deleteMultimediaMasive', [PedidosController, 'deleteMultimediaMasive'])
+  .as('pedido.deleteMultimediaMasive')
 router
   .post('/api/pedidosMasiveByCampaign', [PedidosController, 'pedidosMasiveByCampaign'])
   .as('pedido.pedidosMasiveByCampaign')

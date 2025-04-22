@@ -3,6 +3,28 @@ import { loginValidator, registerValidator } from '#validators/auth'
 import type { HttpContext } from '@adonisjs/core/http'
 
 export default class AuthController {
+  async updatePassword({ request }: HttpContext) {
+    const { email, newPassword } = request.only(['email', 'newPassword'])
+
+    const user = await User.findBy('email', email)
+
+    if (!user) {
+      return {
+        status: 'error',
+        message: 'Usuario no encontrado',
+      }
+    }
+
+    user.password = newPassword
+    await user.save()
+
+    return {
+      data: user,
+      status: 'success',
+      message: 'Contraseña actualizada correctamente',
+    }
+  }
+
   async register({ request }: HttpContext) {
     const data = await request.validateUsing(registerValidator)
     const user = await User.create(data)

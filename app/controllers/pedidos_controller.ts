@@ -382,4 +382,44 @@ export default class PedidosController {
     await pedido.delete()
     return { message: 'pedido deleted successfully' }
   }
+
+  public async deleteMultimediaMasive({ request }: HttpContext) {
+    try {
+      const { pedidos } = request.only(['pedidos'])
+
+      if (!Array.isArray(pedidos) || pedidos.length === 0) {
+        return {
+          status: 'error',
+          message: 'La lista de archivos multimedia está vacía',
+        }
+      }
+
+      // 📌 Extraer las URLs directamente del array
+      const urlsToDelete = pedidos
+        .map((item) => item.url)
+        .filter((url): url is string => typeof url === 'string' && url.trim() !== '')
+
+      if (urlsToDelete.length === 0) {
+        return {
+          status: 'error',
+          message: 'No se encontraron URLs válidas para eliminar',
+        }
+      }
+
+      // 📌 Eliminar de la base de datos por URL
+      const deletedCount = await PedidoMultimedia.query().whereIn('url', urlsToDelete).delete()
+
+      return {
+        status: 'success',
+        message: `Se eliminaron correctamente ${deletedCount} archivos multimedia`,
+      }
+    } catch (error) {
+      console.error('Error al eliminar multimedia:', error)
+      return {
+        status: 'error',
+        message: 'Ocurrió un error al eliminar los archivos multimedia',
+        error: error.message,
+      }
+    }
+  }
 }
