@@ -15,6 +15,7 @@ import SedesController from '#controllers/sedes_controller'
 import PedidosController from '#controllers/pedidos_controller'
 import CampaignsController from '#controllers/campaigns_controller'
 import UsersController from '#controllers/users_controller'
+import ClientesController from '#controllers/clientes_controller'
 
 router.get('/', async () => {
   return {
@@ -91,3 +92,10 @@ router.get('/api/campaigns/:id', [CampaignsController, 'show']).as('campaign.sho
 router.post('/api/campaigns', [CampaignsController, 'store']).as('campaign.store')
 router.put('/api/campaigns/:id', [CampaignsController, 'update']).as('campaign.update')
 router.delete('/api/campaigns/:id', [CampaignsController, 'destroy']).as('campaign.destroy')
+
+// RUTAS PARA campaign
+router.get('/api/clientes', [ClientesController, 'index']).as('cliente.index')
+router.get('/api/clientes/:id', [ClientesController, 'show']).as('cliente.show')
+router.post('/api/clientes', [ClientesController, 'store']).as('cliente.store')
+router.put('/api/clientes/:id', [ClientesController, 'update']).as('cliente.update')
+router.delete('/api/clientes/:id', [ClientesController, 'destroy']).as('cliente.destroy')

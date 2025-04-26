@@ -66,7 +66,11 @@ export default class PedidosController {
   }
   public async pedidosMasive({ request }: HttpContext) {
     try {
-      const { campaign_name, pedidos } = request.only(['campaign_name', 'pedidos'])
+      const { campaign_name, cliente, pedidos } = request.only([
+        'campaign_name',
+        'pedidos',
+        'cliente',
+      ])
 
       if (!campaign_name || !Array.isArray(pedidos) || pedidos.length === 0) {
         return {
@@ -75,7 +79,7 @@ export default class PedidosController {
         }
       }
       // 📌 Crear la campaña
-      const campaign = await Campaign.create({ name: campaign_name })
+      const campaign = await Campaign.create({ name: campaign_name, cliente_id: cliente })
       // 📌 Agregar el ID de la campaña a cada pedido
       const pedidosInsert = pedidos.map((pedido) => ({
         id_solicitante: pedido.id_solicitante,
