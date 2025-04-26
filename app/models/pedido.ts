@@ -16,6 +16,15 @@ export default class Pedido extends BaseModel {
   declare nombre_solicitante: string
 
   @column()
+  declare departamento: string
+
+  @column()
+  declare provincia: string
+
+  @column()
+  declare distrito: string
+
+  @column()
   declare direccion: string
 
   @column()

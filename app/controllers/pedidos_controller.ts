@@ -8,7 +8,11 @@ import type { HttpContext } from '@adonisjs/core/http'
 export default class PedidosController {
   // Listar todos los planes (GET /plans)
   public async index({}: HttpContext) {
-    const pedidos = await Pedido.all()
+    const pedidos = await Pedido.query()
+      .preload('origen')
+      .preload('destino')
+      .preload('status_pedido')
+      .preload('multimedia')
     return pedidos
   }
 
@@ -76,6 +80,9 @@ export default class PedidosController {
       const pedidosInsert = pedidos.map((pedido) => ({
         id_solicitante: pedido.id_solicitante,
         nombre_solicitante: pedido.nombre_solicitante,
+        departamento: pedido.departamento,
+        provincia: pedido.provincia,
+        distrito: pedido.distrito,
         direccion: pedido.direccion,
         referencia: pedido.referencia,
         celular: pedido.celular,
@@ -151,6 +158,9 @@ export default class PedidosController {
       const pedidosInsert = pedidos.map((pedido) => ({
         id_solicitante: pedido.id_solicitante,
         nombre_solicitante: pedido.nombre_solicitante,
+        departamento: pedido.departamento,
+        provincia: pedido.provincia,
+        distrito: pedido.distrito,
         direccion: pedido.direccion,
         referencia: pedido.referencia,
         celular: pedido.celular,
@@ -350,6 +360,9 @@ export default class PedidosController {
       const data = request.only([
         'id_solicitante',
         'nombre_solicitante',
+        'departamento',
+        'provincia',
+        'distrito',
         'direccion',
         'referencia',
         'celular',
