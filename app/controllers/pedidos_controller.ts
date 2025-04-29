@@ -77,6 +77,7 @@ export default class PedidosController {
           message: 'Faltan el pedido id',
         }
       }
+      console.log(pedido_id)
       await PedidoStatus.create({ pedido_id: pedido_id, status: 'entregado' })
       const pedidoData = await Pedido.query().where('id', pedido_id).first()
       if (pedidoData) {
