@@ -2,6 +2,7 @@ import { DateTime } from 'luxon'
 import { BaseModel, belongsTo, column } from '@adonisjs/lucid/orm'
 import Pedido from './pedido.js'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
+import User from './user.js'
 
 export default class PedidoAsignado extends BaseModel {
   public static table = 'pedidos_asignados'
@@ -19,6 +20,11 @@ export default class PedidoAsignado extends BaseModel {
     foreignKey: 'pedido_id',
   })
   public pedido!: BelongsTo<typeof Pedido>
+
+  @belongsTo(() => User, {
+    foreignKey: 'repartidor_id',
+  })
+  public repartidor!: BelongsTo<typeof User>
 
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime

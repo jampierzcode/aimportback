@@ -38,6 +38,7 @@ router.delete('/api/roles/:id', [RolesController, 'destroy']).as('role.destroy')
 
 // RUTAS PARA roles
 router.get('/api/users', [UsersController, 'index']).as('user.index')
+router.get('/api/users/repartidor', [UsersController, 'repartidor']).as('user.repartidor')
 router.get('/api/users/:id', [UsersController, 'show']).as('user.show')
 router.post('/api/users', [UsersController, 'store']).as('user.store')
 router.put('/api/users/:id', [UsersController, 'update']).as('user.update')
@@ -64,6 +65,9 @@ router.post('/api/pedidos', [PedidosController, 'store']).as('pedido.store')
 router.put('/api/pedidos/:id', [PedidosController, 'update']).as('pedido.update')
 router.delete('/api/pedidos/:id', [PedidosController, 'destroy']).as('pedido.destroy')
 router.post('/api/pedidosMasive', [PedidosController, 'pedidosMasive']).as('pedido.pedidosMasive')
+router
+  .post('/api/pedidosAsignarUser', [PedidosController, 'pedidosAsignarUser'])
+  .as('pedido.pedidosAsignarUser')
 router
   .post('/api/pedidosMultimedia', [PedidosController, 'pedidosMultimedia'])
   .as('pedido.pedidosMultimedia')

@@ -1,9 +1,10 @@
 import { DateTime } from 'luxon'
-import { BaseModel, belongsTo, column, hasMany } from '@adonisjs/lucid/orm'
+import { BaseModel, belongsTo, column, hasMany, hasOne } from '@adonisjs/lucid/orm'
 import Sede from './sede.js'
-import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
+import type { BelongsTo, HasMany, HasOne } from '@adonisjs/lucid/types/relations'
 import PedidoStatus from './pedido_status.js'
 import PedidoMultimedia from './pedido_multimedia.js'
+import PedidoAsignado from './pedido_asignado.js'
 
 export default class Pedido extends BaseModel {
   @column({ isPrimary: true })
@@ -47,6 +48,11 @@ export default class Pedido extends BaseModel {
 
   @column()
   declare origen_id: number
+
+  @hasOne(() => PedidoAsignado, {
+    foreignKey: 'pedido_id',
+  })
+  public asignacion!: HasOne<typeof PedidoAsignado>
 
   // Relación con la sede origen
   @belongsTo(() => Sede, {

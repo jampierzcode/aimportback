@@ -40,10 +40,29 @@ export default class UsersController {
       }
     }
   }
+  // Mostrar un plan individual por ID (GET /plans/:id)
+  public async repartidor({ params }: HttpContext) {
+    try {
+      console.log(params)
+      const usuario = await User.query().where('rol_id', 3).preload('sede')
+      console.log(usuario)
+      return {
+        status: 'success',
+        message: 'usuarios fetched with success',
+        data: usuario,
+      }
+    } catch (error) {
+      return {
+        status: 'error',
+        message: 'usuarios fetched with error',
+        error: error,
+      }
+    }
+  }
   public async usersSuperadmin({ params }: HttpContext) {
     try {
       console.log(params)
-      const usuario = await User.query().whereNot('rol_id', 1)
+      const usuario = await User.query().whereNot('rol_id', 1).preload('sede').preload('rol')
       console.log(usuario)
       return {
         status: 'success',

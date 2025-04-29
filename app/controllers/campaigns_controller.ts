@@ -10,6 +10,9 @@ export default class CampaignsController {
         .preload('destino') // sede destino
         .preload('status_pedido')
         .preload('multimedia')
+        .preload('asignacion', (asignacionQuery) => {
+          asignacionQuery.preload('repartidor')
+        })
     })
     return campaigns
   }
@@ -25,6 +28,9 @@ export default class CampaignsController {
           .preload('destino') // sede destino
           .preload('status_pedido')
           .preload('multimedia')
+          .preload('asignacion', (asignacionQuery) => {
+            asignacionQuery.preload('repartidor')
+          })
       })
       .first()
     return campaign

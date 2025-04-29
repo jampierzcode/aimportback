@@ -13,6 +13,9 @@ export default class PedidosController {
       .preload('destino')
       .preload('status_pedido')
       .preload('multimedia')
+      .preload('asignacion', (asignacionQuery) => {
+        asignacionQuery.preload('repartidor')
+      })
     return pedidos
   }
 
@@ -112,6 +115,40 @@ export default class PedidosController {
       return {
         status: 'error',
         message: 'pedidos no se subieron correctamente',
+        error: error,
+      }
+    }
+  }
+  public async pedidosAsignarUser({ request }: HttpContext) {
+    try {
+      const { repartidor_id, pedidos } = request.only(['repartidor_id', 'pedidos'])
+
+      if (!repartidor_id || !Array.isArray(pedidos) || pedidos.length === 0) {
+        return {
+          status: 'error',
+          message: 'Faltan datos o la lista de pedidos está vacía',
+        }
+      }
+
+      // 📌 Agregar el ID de la campaña a cada pedido
+      const pedidosInsert = pedidos.map((pedido) => ({
+        repartidor_id: repartidor_id,
+        pedido_id: pedido,
+      }))
+
+      console.log(pedidosInsert)
+
+      // 📌 Insertar pedidos masivamente con createMany
+      await PedidoAsignado.createMany(pedidosInsert)
+
+      return {
+        status: 'success',
+        message: 'pedidos asignados successfully',
+      }
+    } catch (error) {
+      return {
+        status: 'error',
+        message: 'pedidos no se asignaron correctamente',
         error: error,
       }
     }
