@@ -67,6 +67,35 @@ export default class PedidosController {
     const pedido = await Pedido.create(data)
     return pedido
   }
+  // Crear un nuevo pedido (POST /plans)
+  public async entregar({ request }: HttpContext) {
+    const { pedido_id } = request.only(['pedido_id']) // Asume que estos campos existen
+    try {
+      if (!pedido_id) {
+        return {
+          status: 'error',
+          message: 'Faltan el pedido id',
+        }
+      }
+      await PedidoStatus.create({ pedido_id: pedido_id, status: 'entregado' })
+      const pedidoData = await Pedido.query().where('id', pedido_id).first()
+      if (pedidoData) {
+        pedidoData.merge({ status: 'entregado' })
+        await pedidoData.save()
+      }
+
+      return {
+        status: 'success',
+        message: 'pedido se entrego successfully',
+      }
+    } catch (error) {
+      return {
+        status: 'error',
+        message: 'pedido no se entrego ni actualizo correctamente',
+        error: error,
+      }
+    }
+  }
   public async pedidosMasive({ request }: HttpContext) {
     try {
       const { campaign_name, cliente, pedidos } = request.only([
