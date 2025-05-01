@@ -1,13 +1,14 @@
 import { DateTime } from 'luxon'
 import hash from '@adonisjs/core/services/hash'
 import { compose } from '@adonisjs/core/helpers'
-import { BaseModel, belongsTo, column } from '@adonisjs/lucid/orm'
+import { BaseModel, belongsTo, column, hasOne } from '@adonisjs/lucid/orm'
 import { withAuthFinder } from '@adonisjs/auth/mixins/lucid'
 import { DbAccessTokensProvider } from '@adonisjs/auth/access_tokens'
 
 import Role from './role.js'
 import Sede from './sede.js'
-import type { BelongsTo } from '@adonisjs/lucid/types/relations'
+import type { BelongsTo, HasOne } from '@adonisjs/lucid/types/relations'
+import Cliente from './cliente.js'
 // import { BelongsTo } from '@adonisjs/lucid/types/relations'
 
 const AuthFinder = withAuthFinder(() => hash.use('scrypt'), {
@@ -57,6 +58,12 @@ export default class User extends compose(BaseModel, AuthFinder) {
     foreignKey: 'sede_id', // Llave foránea en la tabla users que apunta a sedes
   })
   declare sede: BelongsTo<typeof Sede>
+
+  // Relación autorreferencial para obtener el cliente
+  @hasOne(() => Cliente, {
+    foreignKey: 'usuario_id', // Llave foránea en la tabla users que apunta a sedes
+  })
+  declare cliente: HasOne<typeof Cliente>
 
   // // Relación autorreferencial para obtener el creador
   // @belongsTo(() => User, {

@@ -22,7 +22,7 @@ export default class Cliente extends BaseModel {
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
 
-  // Relación autorreferencial para obtener la sede
+  // Relación autorreferencial para obtener el usuario
   @hasOne(() => User, {
     foreignKey: 'usuario_id', // Llave foránea en la tabla users que apunta a sedes
   })

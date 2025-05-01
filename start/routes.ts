@@ -98,9 +98,10 @@ router.post('/api/campaigns', [CampaignsController, 'store']).as('campaign.store
 router.put('/api/campaigns/:id', [CampaignsController, 'update']).as('campaign.update')
 router.delete('/api/campaigns/:id', [CampaignsController, 'destroy']).as('campaign.destroy')
 
-// RUTAS PARA campaign
+// RUTAS PARA clientes
 router.get('/api/clientes', [ClientesController, 'index']).as('cliente.index')
 router.get('/api/clientes/:id', [ClientesController, 'show']).as('cliente.show')
+router.get('/api/cliente/campaigns', [ClientesController, 'campaigns']).as('cliente.campaigns')
 router.post('/api/clientes', [ClientesController, 'store']).as('cliente.store')
 router.put('/api/clientes/:id', [ClientesController, 'update']).as('cliente.update')
 router.delete('/api/clientes/:id', [ClientesController, 'destroy']).as('cliente.destroy')

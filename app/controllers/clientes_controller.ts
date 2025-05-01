@@ -1,3 +1,4 @@
+import Campaign from '#models/campaign'
 import Cliente from '#models/cliente'
 import type { HttpContext } from '@adonisjs/core/http'
 
@@ -33,6 +34,31 @@ export default class ClientesController {
         message: 'cliente fetched with success',
         data: cliente,
       }
+    } catch (error) {
+      return {
+        status: 'error',
+        message: 'cliente fetched with error',
+        error: error,
+      }
+    }
+  }
+
+  // Mostrar canpañas de cliente logueado (GET /plans/:id)
+  public async campaigns({ auth }: HttpContext) {
+    try {
+      await auth.check()
+      const userId = auth.user!.id
+      // Buscar el cliente por el user_id
+      const cliente = await Cliente.findBy('usuario_id', userId)
+
+      if (!cliente) {
+        return [] // o return response.notFound({ message: 'Cliente no encontrado' })
+      }
+
+      // Buscar campañas por cliente_id
+      const campaigns = await Campaign.query().where('cliente_id', cliente.id)
+
+      return campaigns
     } catch (error) {
       return {
         status: 'error',
