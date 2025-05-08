@@ -269,6 +269,7 @@ export default class PedidosController {
   }
   public async senDataPedidosCargadaMasive({ request, auth }: HttpContext) {
     await auth.check()
+
     try {
       const { pedidos } = request.only(['pedidos'])
 
@@ -278,34 +279,50 @@ export default class PedidosController {
           message: 'La lista de pedidos está vacía',
         }
       }
-      const pedidosStatus = pedidos.map((p) => ({
-        pedido_id: p,
+
+      // Verificamos que todos los pedidos existan antes de continuar
+      const pedidosEncontrados = await Pedido.query().whereIn('id', pedidos)
+
+      if (pedidosEncontrados.length !== pedidos.length) {
+        const idsEncontrados = pedidosEncontrados.map((p) => p.id)
+        const idsFaltantes = pedidos.filter((id) => !idsEncontrados.includes(id))
+        return {
+          status: 'error',
+          message: 'Algunos pedidos no fueron encontrados',
+          pedidos_no_encontrados: idsFaltantes,
+        }
+      }
+
+      // Crear registros en PedidoStatus
+      const pedidosStatus = pedidos.map((pedidoId) => ({
+        pedido_id: pedidoId,
         status: 'recepcionado',
         user_id: auth.user!.id,
       }))
 
-      await PedidoStatus.createMany(pedidosStatus) // Guardar las asociaciones en la tabla intermedia
+      await PedidoStatus.createMany(pedidosStatus)
 
-      // Actualizar cada pedido correctamente
-      for (const pedido of pedidos) {
-        const pedidoData = await Pedido.query().where('id_solicitante', pedido).first()
-        if (pedidoData) {
-          pedidoData.merge({ status: 'recepcionado' })
-          await pedidoData.save()
-        }
+      // Actualizar estado de los pedidos
+      for (const pedido of pedidosEncontrados) {
+        pedido.status = 'recepcionado'
+        await pedido.save()
       }
+
       return {
         status: 'success',
-        message: 'pedidos update successfully',
+        message: 'Pedidos actualizados y registrados en PedidoStatus correctamente',
       }
     } catch (error) {
+      console.error('Error al actualizar pedidos:', error)
+
       return {
         status: 'error',
-        message: 'pedidos no se actualizaron correctamente',
-        error: error,
+        message: 'Ocurrió un error al procesar los pedidos',
+        error: error.message || error,
       }
     }
   }
+
   public async senDataPedidosEnCaminoMasive({ request, auth }: HttpContext) {
     await auth.check()
     try {
