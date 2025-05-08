@@ -168,8 +168,14 @@ export default class PedidosController {
 
       console.log(pedidosInsert)
 
+      const pedidosStatus = pedidos.map((pedido) => ({
+        status: 'en reparto',
+        pedido_id: pedido,
+      }))
+
       // 📌 Insertar pedidos masivamente con createMany
       await PedidoAsignado.createMany(pedidosInsert)
+      await PedidoStatus.createMany(pedidosStatus)
 
       return {
         status: 'success',
