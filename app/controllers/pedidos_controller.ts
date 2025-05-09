@@ -165,7 +165,9 @@ export default class PedidosController {
       }
     }
   }
-  public async pedidosAsignarUser({ request }: HttpContext) {
+  public async pedidosAsignarUser({ request, auth }: HttpContext) {
+    await auth.check()
+
     try {
       const { repartidor_id, pedidos } = request.only(['repartidor_id', 'pedidos'])
 
@@ -176,35 +178,57 @@ export default class PedidosController {
         }
       }
 
-      // 📌 Agregar el ID de la campaña a cada pedido
-      const pedidosInsert = pedidos.map((pedido) => ({
-        repartidor_id: repartidor_id,
-        pedido_id: pedido,
+      // Verificamos que todos los pedidos existan antes de continuar
+      const pedidosEncontrados = await Pedido.query().whereIn('id', pedidos)
+
+      if (pedidosEncontrados.length !== pedidos.length) {
+        const idsEncontrados = pedidosEncontrados.map((p) => p.id)
+        const idsFaltantes = pedidos.filter((id) => !idsEncontrados.includes(id))
+        return {
+          status: 'error',
+          message: 'Algunos pedidos no fueron encontrados',
+          pedidos_no_encontrados: idsFaltantes,
+        }
+      }
+
+      // Insertar asignaciones
+      const pedidosInsert = pedidos.map((pedidoId) => ({
+        repartidor_id,
+        pedido_id: pedidoId,
       }))
 
-      console.log(pedidosInsert)
-
-      const pedidosStatus = pedidos.map((pedido) => ({
-        status: 'en reparto',
-        pedido_id: pedido,
-      }))
-
-      // 📌 Insertar pedidos masivamente con createMany
       await PedidoAsignado.createMany(pedidosInsert)
+
+      // Crear registros en PedidoStatus
+      const pedidosStatus = pedidos.map((pedidoId) => ({
+        pedido_id: pedidoId,
+        status: 'en reparto',
+        user_id: auth.user!.id,
+      }))
+
       await PedidoStatus.createMany(pedidosStatus)
+
+      // Actualizar estado de los pedidos
+      for (const pedido of pedidosEncontrados) {
+        pedido.status = 'en reparto'
+        await pedido.save()
+      }
 
       return {
         status: 'success',
-        message: 'pedidos asignados successfully',
+        message: 'Pedidos asignados, actualizados y registrados correctamente',
       }
     } catch (error) {
+      console.error('Error al asignar pedidos:', error)
+
       return {
         status: 'error',
-        message: 'pedidos no se asignaron correctamente',
-        error: error,
+        message: 'Ocurrió un error al asignar los pedidos',
+        error: error.message || error,
       }
     }
   }
+
   public async pedidosMultimedia({ request }: HttpContext) {
     try {
       const { files, pedido_id } = request.only(['pedido_id', 'files'])
