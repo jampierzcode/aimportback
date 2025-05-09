@@ -7,6 +7,14 @@ export default class extends BaseSchema {
     this.schema.createTable(this.tableName, (table) => {
       table.increments('id')
       table.string('id_solicitante').notNullable()
+      table.string('entrega').nullable()
+      table.string('org_ventas').nullable()
+      table.string('fecha_pedido').nullable()
+      table.string('dni').nullable()
+      table.string('bulto').nullable()
+      table.string('empaque').nullable()
+      table.string('auditoria').nullable()
+      table.string('mail_plan').nullable()
       table.string('nombre_solicitante').notNullable()
       table.string('departamento').nullable()
       table.string('provincia').nullable()
@@ -21,7 +29,13 @@ export default class extends BaseSchema {
 
       table.integer('origen_id').unsigned().references('id').inTable('sedes').notNullable()
       table.integer('destino_id').unsigned().references('id').inTable('sedes').notNullable()
-      table.integer('campaign_id').unsigned().references('id').inTable('campaigns').nullable()
+      table
+        .integer('campaign_id')
+        .unsigned()
+        .references('id')
+        .inTable('campaigns')
+        .nullable()
+        .onDelete('CASCADE')
 
       table.timestamp('created_at').notNullable().defaultTo(this.now())
       table.timestamp('updated_at').nullable()

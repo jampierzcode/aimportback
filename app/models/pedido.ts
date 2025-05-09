@@ -14,6 +14,30 @@ export default class Pedido extends BaseModel {
   declare id_solicitante: string
 
   @column()
+  declare entrega: string
+
+  @column()
+  declare org_ventas: string
+
+  @column()
+  declare fecha_pedido: string
+
+  @column()
+  declare dni: string
+
+  @column()
+  declare bulto: string
+
+  @column()
+  declare empaque: string
+
+  @column()
+  declare auditoria: string
+
+  @column()
+  declare mail_plan: string
+
+  @column()
   declare nombre_solicitante: string
 
   @column()

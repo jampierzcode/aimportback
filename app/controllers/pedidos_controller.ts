@@ -53,6 +53,14 @@ export default class PedidosController {
   public async store({ request }: HttpContext) {
     const data = request.only([
       'id_solicitante',
+      'entrega',
+      'org_ventas',
+      'fecha_pedido',
+      'dni',
+      'bulto',
+      'empaque',
+      'auditoria',
+      'mail_plan',
       'nombre_solicitante',
       'direccion',
       'referencia',
@@ -116,6 +124,14 @@ export default class PedidosController {
       // 📌 Agregar el ID de la campaña a cada pedido
       const pedidosInsert = pedidos.map((pedido) => ({
         id_solicitante: pedido.id_solicitante,
+        entrega: pedido.entrega,
+        org_ventas: pedido.org_ventas,
+        fecha_pedido: pedido.fecha_pedido,
+        dni: pedido.dni,
+        bulto: pedido.bulto,
+        empaque: pedido.empaque,
+        auditoria: pedido.auditoria,
+        mail_plan: pedido.mail_plan,
         nombre_solicitante: pedido.nombre_solicitante,
         departamento: pedido.departamento,
         provincia: pedido.provincia,
@@ -234,6 +250,14 @@ export default class PedidosController {
       // 📌 Agregar el ID de la campaña a cada pedido
       const pedidosInsert = pedidos.map((pedido) => ({
         id_solicitante: pedido.id_solicitante,
+        entrega: pedido.entrega,
+        org_ventas: pedido.org_ventas,
+        fecha_pedido: pedido.fecha_pedido,
+        dni: pedido.dni,
+        bulto: pedido.bulto,
+        empaque: pedido.empaque,
+        auditoria: pedido.auditoria,
+        mail_plan: pedido.mail_plan,
         nombre_solicitante: pedido.nombre_solicitante,
         departamento: pedido.departamento,
         provincia: pedido.provincia,
@@ -250,16 +274,15 @@ export default class PedidosController {
         campaign_id: campaign_id,
       }))
 
-      console.log(pedidosInsert)
-
       // 📌 Insertar pedidos masivamente con createMany
       await Pedido.createMany(pedidosInsert)
 
       return {
         status: 'success',
-        message: 'pedidos deleted successfully',
+        message: 'pedidos subidos successfully',
       }
     } catch (error) {
+      console.log(error)
       return {
         status: 'error',
         message: 'pedidos no se subieron correctamente',
@@ -453,6 +476,14 @@ export default class PedidosController {
       const pedido = await Pedido.findOrFail(params.id)
       const data = request.only([
         'id_solicitante',
+        'entrega',
+        'org_ventas',
+        'fecha_pedido',
+        'dni',
+        'bulto',
+        'empaque',
+        'auditoria',
+        'mail_plan',
         'nombre_solicitante',
         'departamento',
         'provincia',
