@@ -79,8 +79,14 @@ router
   .post('/api/pedidosMasiveByCampaign', [PedidosController, 'pedidosMasiveByCampaign'])
   .as('pedido.pedidosMasiveByCampaign')
 router
+  .post('/api/pedidosUpdateInfoMasive', [PedidosController, 'pedidosUpdateInfoMasive'])
+  .as('pedido.pedidosUpdateInfoMasive')
+router
   .post('/api/senDataPedidosCargadaMasive', [PedidosController, 'senDataPedidosCargadaMasive'])
   .as('pedido.senDataPedidosCargadaMasive')
+router
+  .post('/api/senDataPedidosCodes', [PedidosController, 'senDataPedidosCodes'])
+  .as('pedido.senDataPedidosCodes')
 router
   .post('/api/senDataPedidosEnCaminoMasive', [PedidosController, 'senDataPedidosEnCaminoMasive'])
   .as('pedido.senDataPedidosEnCaminoMasive')

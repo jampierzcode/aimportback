@@ -38,7 +38,7 @@ export default class CampaignsController {
 
   // Crear un nuevo campaign (POST /plans)
   public async store({ request }: HttpContext) {
-    const data = request.only(['name']) // Asume que estos campos existen
+    const data = request.only(['name', 'cliente_id']) // Asume que estos campos existen
     const campaign = await Campaign.create(data)
     return campaign
   }
@@ -46,7 +46,7 @@ export default class CampaignsController {
   // Actualizar un plan existente (PUT /plans/:id)
   public async update({ params, request }: HttpContext) {
     const campaign = await Campaign.findOrFail(params.id)
-    const data = request.only(['name']) // Asume que estos campos existen
+    const data = request.only(['name', 'cliente_id']) // Asume que estos campos existen
     campaign.merge(data)
     await campaign.save()
     return campaign

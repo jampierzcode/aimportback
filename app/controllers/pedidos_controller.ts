@@ -314,6 +314,42 @@ export default class PedidosController {
       }
     }
   }
+  public async pedidosUpdateInfoMasive({ request }: HttpContext) {
+    try {
+      const { pedidos } = request.only(['pedidos'])
+
+      if (!Array.isArray(pedidos) || pedidos.length === 0) {
+        return {
+          status: 'error',
+          message: 'Faltan datos o la lista de pedidos está vacía',
+        }
+      }
+
+      // Actualizar cada pedido correctamente
+      for (const pedido of pedidos) {
+        const pedidoData = await Pedido.query()
+          .where('id_solicitante', pedido.id_solicitante)
+          .first()
+        if (pedidoData) {
+          delete pedido.id
+          pedidoData.merge(pedido)
+          await pedidoData.save()
+        }
+      }
+
+      return {
+        status: 'success',
+        message: 'pedidos actualizados successfully',
+      }
+    } catch (error) {
+      console.log(error)
+      return {
+        status: 'error',
+        message: 'pedidos no se actualizaron correctamente',
+        error: error,
+      }
+    }
+  }
   public async senDataPedidosCargadaMasive({ request, auth }: HttpContext) {
     await auth.check()
 
@@ -361,6 +397,54 @@ export default class PedidosController {
       }
     } catch (error) {
       console.error('Error al actualizar pedidos:', error)
+
+      return {
+        status: 'error',
+        message: 'Ocurrió un error al procesar los pedidos',
+        error: error.message || error,
+      }
+    }
+  }
+  public async senDataPedidosCodes({ request, auth }: HttpContext) {
+    await auth.check()
+
+    try {
+      const { pedidos, campaign_id } = request.only(['pedidos', 'campaign_id'])
+
+      if (!Array.isArray(pedidos) || pedidos.length === 0) {
+        return {
+          status: 'error',
+          message: 'La lista de pedidos está vacía',
+        }
+      }
+
+      // Crear registros en PedidoStatus
+      const pedidosCodes = pedidos.map((pedidoCode) => ({
+        id_solicitante: pedidoCode,
+        status: 'recepcionado',
+        campaign_id: campaign_id,
+      }))
+
+      await Pedido.createMany(pedidosCodes)
+      const pedidosInsertados = await Pedido.query()
+        .whereIn('id_solicitante', pedidos)
+        .andWhere('campaign_id', campaign_id)
+        .orderBy('id', 'desc') // opcional, si deseas ordenarlos
+
+      const pedidosStatus = pedidosInsertados.map((pedido) => ({
+        pedido_id: pedido.id,
+        status: 'recepcionado',
+        user_id: auth.user!.id,
+      }))
+
+      await PedidoStatus.createMany(pedidosStatus)
+
+      return {
+        status: 'success',
+        message: 'Codigos de Pedidos registrados correctamente',
+      }
+    } catch (error) {
+      console.error('Error al registrar codigos de pedidos:', error)
 
       return {
         status: 'error',

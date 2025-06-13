@@ -17,6 +17,9 @@ export default class Pedido extends BaseModel {
   declare entrega: string
 
   @column()
+  declare zona_ventas: string
+
+  @column()
   declare org_ventas: string
 
   @column()

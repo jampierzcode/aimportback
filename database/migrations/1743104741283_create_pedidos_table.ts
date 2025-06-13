@@ -8,6 +8,7 @@ export default class extends BaseSchema {
       table.increments('id')
       table.string('id_solicitante').notNullable()
       table.string('entrega').nullable()
+      table.string('zona_ventas').nullable()
       table.string('org_ventas').nullable()
       table.string('fecha_pedido').nullable()
       table.string('dni').nullable()
@@ -15,7 +16,7 @@ export default class extends BaseSchema {
       table.string('empaque').nullable()
       table.string('auditoria').nullable()
       table.string('mail_plan').nullable()
-      table.string('nombre_solicitante').notNullable()
+      table.string('nombre_solicitante').nullable()
       table.string('departamento').nullable()
       table.string('provincia').nullable()
       table.string('distrito').nullable()
@@ -27,8 +28,8 @@ export default class extends BaseSchema {
       table.string('num_cajas').nullable()
       table.string('status').nullable()
 
-      table.integer('origen_id').unsigned().references('id').inTable('sedes').notNullable()
-      table.integer('destino_id').unsigned().references('id').inTable('sedes').notNullable()
+      table.integer('origen_id').unsigned().references('id').inTable('sedes').nullable()
+      table.integer('destino_id').unsigned().references('id').inTable('sedes').nullable()
       table
         .integer('campaign_id')
         .unsigned()
