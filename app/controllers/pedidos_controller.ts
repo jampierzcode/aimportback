@@ -339,7 +339,7 @@ export default class PedidosController {
 
       return {
         status: 'success',
-        message: 'pedidos actualizados successfully',
+        message: 'pedidos actualizados bien successfully',
       }
     } catch (error) {
       console.log(error)
