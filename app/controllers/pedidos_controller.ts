@@ -314,7 +314,8 @@ export default class PedidosController {
       }
     }
   }
-  public async pedidosUpdateInfoMasive({ request }: HttpContext) {
+  public async pedidosUpdateInfoMasive({ request, auth }: HttpContext) {
+    await auth.check()
     try {
       const { pedidos } = request.only(['pedidos'])
 
@@ -339,7 +340,53 @@ export default class PedidosController {
 
       return {
         status: 'success',
-        message: 'pedidos actualizados bien successfully',
+        message: 'pedidos completados correctamente',
+      }
+    } catch (error) {
+      console.log(error)
+      return {
+        status: 'error',
+        message: 'pedidos no completados correctamente',
+        error: error,
+      }
+    }
+  }
+  public async pedidosTracking({ request, auth }: HttpContext) {
+    await auth.check()
+    try {
+      const { pedidos, status, fecha } = request.only(['pedidos', 'status', 'fecha'])
+
+      if (!Array.isArray(pedidos) || pedidos.length === 0) {
+        return {
+          status: 'error',
+          message: 'Faltan datos o la lista de pedidos está vacía',
+        }
+      }
+
+      // Crear registros en PedidoStatus
+
+      if (fecha !== null) {
+        const pedidosStatus = pedidos.map((p) => ({
+          pedido_id: p,
+          status: status,
+          user_id: auth.user!.id,
+          createdAt: fecha,
+        }))
+        await PedidoStatus.createMany(pedidosStatus)
+      } else {
+        const pedidosStatus = pedidos.map((p) => ({
+          pedido_id: p,
+          status: status,
+          user_id: auth.user!.id,
+        }))
+        await PedidoStatus.createMany(pedidosStatus)
+      }
+      // ✅ Actualización masiva del estado
+      await Pedido.query().whereIn('id', pedidos).update({ status })
+
+      return {
+        status: 'success',
+        message: 'pedidos actualizados correctamente',
       }
     } catch (error) {
       console.log(error)
