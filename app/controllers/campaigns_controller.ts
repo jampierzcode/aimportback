@@ -4,16 +4,8 @@ import type { HttpContext } from '@adonisjs/core/http'
 export default class CampaignsController {
   // Listar todos los planes (GET /plans)
   public async index({}: HttpContext) {
-    const campaigns = await Campaign.query().preload('pedidos', (pedidoQuery) => {
-      pedidoQuery
-        .preload('origen') // sede origen
-        .preload('destino') // sede destino
-        .preload('status_pedido')
-        .preload('multimedia')
-        .preload('asignacion', (asignacionQuery) => {
-          asignacionQuery.preload('repartidor')
-        })
-    })
+    const campaigns = await Campaign.query()
+
     return campaigns
   }
 
