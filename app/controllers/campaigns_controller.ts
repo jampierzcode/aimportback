@@ -1,4 +1,5 @@
 import Campaign from '#models/campaign'
+import PedidoAsignado from '#models/pedido_asignado'
 import type { HttpContext } from '@adonisjs/core/http'
 
 export default class CampaignsController {
@@ -26,6 +27,52 @@ export default class CampaignsController {
       })
       .first()
     return campaign
+  }
+  // Mostrar pedidos asignados a un repartidor de una campaña especifica
+  public async campaignAsignadaById({ auth, params }: HttpContext) {
+    await auth.check()
+    console.log(params)
+
+    const campaign = await Campaign.query()
+      .where('id', params.id)
+      .preload('pedidos', (pedidoQuery) => {
+        // Traer solo los pedidos que estén asignados al user
+        pedidoQuery
+          .whereExists((subquery) => {
+            subquery
+              .from('pedidos_asignados')
+              .whereRaw('pedidos_asignados.pedido_id = pedidos.id')
+              .where('repartidor_id', auth.user!.id)
+          })
+          .preload('origen')
+          .preload('destino')
+          .preload('status_pedido')
+          .preload('multimedia')
+      })
+      .firstOrFail()
+
+    return campaign
+  }
+  // Mostrar campñas asignadas a un usuario repartidor
+  public async campaignsAsignadas({ auth }: HttpContext) {
+    await auth.check()
+    const asignaciones = await PedidoAsignado.query()
+      .where('repartidor_id', auth.user!.id)
+      .preload('pedido', (pedidoQuery) => {
+        pedidoQuery.preload('campaign')
+      })
+
+    // Extraer campañas, evitando duplicados
+    const campañasUnicas = [
+      ...new Map(
+        asignaciones
+          .map((a) => a.pedido.campaign)
+          .filter((c) => c) // evitar nulls
+          .map((camp) => [camp.id, camp]) // usar Map para evitar duplicados
+      ).values(),
+    ]
+
+    return campañasUnicas
   }
 
   // Crear un nuevo campaign (POST /plans)

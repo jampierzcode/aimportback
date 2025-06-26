@@ -103,6 +103,12 @@ router
 // RUTAS PARA campaign
 router.get('/api/campaigns', [CampaignsController, 'index']).as('campaign.index')
 router.get('/api/campaigns/:id', [CampaignsController, 'show']).as('campaign.show')
+router
+  .get('/api/campaignAsignadaById/:id', [CampaignsController, 'campaignAsignadaById'])
+  .as('campaign.campaignAsignadaById')
+router
+  .get('/api/campaignsAsignadas', [CampaignsController, 'campaignsAsignadas'])
+  .as('campaign.campaignsAsignadas')
 router.post('/api/campaigns', [CampaignsController, 'store']).as('campaign.store')
 router.put('/api/campaigns/:id', [CampaignsController, 'update']).as('campaign.update')
 router.delete('/api/campaigns/:id', [CampaignsController, 'destroy']).as('campaign.destroy')

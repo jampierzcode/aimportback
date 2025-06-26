@@ -5,6 +5,7 @@ import type { BelongsTo, HasMany, HasOne } from '@adonisjs/lucid/types/relations
 import PedidoStatus from './pedido_status.js'
 import PedidoMultimedia from './pedido_multimedia.js'
 import PedidoAsignado from './pedido_asignado.js'
+import Campaign from './campaign.js'
 
 export default class Pedido extends BaseModel {
   @column({ isPrimary: true })
@@ -110,6 +111,11 @@ export default class Pedido extends BaseModel {
 
   @column()
   declare campaign_id: number
+
+  @belongsTo(() => Campaign, {
+    foreignKey: 'campaign_id',
+  })
+  public campaign!: BelongsTo<typeof Campaign>
 
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
