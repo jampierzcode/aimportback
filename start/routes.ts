@@ -63,6 +63,9 @@ router
   .as('pedido.pedidoByRepartidor')
 router.post('/api/pedidos', [PedidosController, 'store']).as('pedido.store')
 router.post('/api/pedidoEntregar', [PedidosController, 'entregar']).as('pedido.entregar')
+router
+  .post('/api/devolverEntrega', [PedidosController, 'devolverEntrega'])
+  .as('pedido.devolverEntrega')
 router.put('/api/pedidos/:id', [PedidosController, 'update']).as('pedido.update')
 router.delete('/api/pedidos/:id', [PedidosController, 'destroy']).as('pedido.destroy')
 router.post('/api/pedidosMasive', [PedidosController, 'pedidosMasive']).as('pedido.pedidosMasive')

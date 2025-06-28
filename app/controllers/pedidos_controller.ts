@@ -105,6 +105,44 @@ export default class PedidosController {
       }
     }
   }
+
+  public async devolverEntrega({ request }: HttpContext) {
+    const { pedido_id } = request.only(['pedido_id'])
+
+    try {
+      if (!pedido_id) {
+        return {
+          status: 'error',
+          message: 'Falta el ID del pedido',
+        }
+      }
+
+      // Eliminar el status entregado de pedidos_status
+      await PedidoStatus.query()
+        .where('pedido_id', pedido_id)
+        .andWhere('status', 'entregado')
+        .delete()
+
+      // Buscar el pedido y actualizar el status
+      const pedido = await Pedido.query().where('id', pedido_id).first()
+      if (pedido) {
+        pedido.merge({ status: 'en reparto' })
+        await pedido.save()
+      }
+
+      return {
+        status: 'success',
+        message: 'El pedido fue revertido a "en reparto"',
+      }
+    } catch (error) {
+      return {
+        status: 'error',
+        message: 'No se pudo revertir el pedido',
+        error: error.message,
+      }
+    }
+  }
+
   public async pedidosMasive({ request }: HttpContext) {
     try {
       const { campaign_name, cliente, pedidos } = request.only([
