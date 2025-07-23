@@ -4,6 +4,7 @@ import PedidoAsignado from '#models/pedido_asignado'
 import PedidoMultimedia from '#models/pedido_multimedia'
 import PedidoStatus from '#models/pedido_status'
 import type { HttpContext } from '@adonisjs/core/http'
+import { DateTime } from 'luxon'
 
 export default class PedidosController {
   // Listar todos los planes (GET /plans)
@@ -242,6 +243,7 @@ export default class PedidosController {
         pedido_id: pedidoId,
         status: 'en reparto',
         user_id: auth.user!.id,
+        createdAt: DateTime.now().setZone('America/Lima'),
       }))
 
       await PedidoStatus.createMany(pedidosStatus)
@@ -389,6 +391,7 @@ export default class PedidosController {
       }
     }
   }
+
   public async pedidosTracking({ request, auth }: HttpContext) {
     await auth.check()
     try {
@@ -401,24 +404,18 @@ export default class PedidosController {
         }
       }
 
-      // Crear registros en PedidoStatus
+      // Verificamos si la fecha fue pasada, y si no, generamos con zona horaria de Perú
+      const pedidosStatus = pedidos.map((p) => ({
+        pedido_id: p,
+        status: status,
+        user_id: auth.user!.id,
+        createdAt: fecha
+          ? DateTime.fromISO(fecha, { zone: 'America/Lima' })
+          : DateTime.now().setZone('America/Lima'),
+      }))
 
-      if (fecha !== null) {
-        const pedidosStatus = pedidos.map((p) => ({
-          pedido_id: p,
-          status: status,
-          user_id: auth.user!.id,
-          createdAt: fecha,
-        }))
-        await PedidoStatus.createMany(pedidosStatus)
-      } else {
-        const pedidosStatus = pedidos.map((p) => ({
-          pedido_id: p,
-          status: status,
-          user_id: auth.user!.id,
-        }))
-        await PedidoStatus.createMany(pedidosStatus)
-      }
+      await PedidoStatus.createMany(pedidosStatus)
+
       // ✅ Actualización masiva del estado
       await Pedido.query().whereIn('id', pedidos).update({ status })
 
@@ -466,6 +463,7 @@ export default class PedidosController {
         pedido_id: pedidoId,
         status: 'recepcionado',
         user_id: auth.user!.id,
+        createdAt: DateTime.now().setZone('America/Lima'),
       }))
 
       await PedidoStatus.createMany(pedidosStatus)
@@ -520,6 +518,7 @@ export default class PedidosController {
         pedido_id: pedido.id,
         status: 'recepcionado',
         user_id: auth.user!.id,
+        createdAt: DateTime.now().setZone('America/Lima'),
       }))
 
       await PedidoStatus.createMany(pedidosStatus)
@@ -554,6 +553,7 @@ export default class PedidosController {
         pedido_id: p,
         status: 'en camino',
         user_id: auth.user!.id,
+        createdAt: DateTime.now().setZone('America/Lima'),
       }))
 
       await PedidoStatus.createMany(pedidosStatus) // Guardar las asociaciones en la tabla intermedia
@@ -593,6 +593,7 @@ export default class PedidosController {
         pedido_id: p,
         status: 'en almacen',
         user_id: auth.user!.id,
+        createdAt: DateTime.now().setZone('America/Lima'),
       }))
 
       await PedidoStatus.createMany(pedidosStatus) // Guardar las asociaciones en la tabla intermedia
@@ -632,6 +633,7 @@ export default class PedidosController {
         pedido_id: p,
         status: 'en reparto',
         user_id: auth.user!.id,
+        createdAt: DateTime.now().setZone('America/Lima'),
       }))
 
       await PedidoStatus.createMany(pedidosStatus) // Guardar las asociaciones en la tabla intermedia
