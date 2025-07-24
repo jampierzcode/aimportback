@@ -430,6 +430,46 @@ export default class PedidosController {
       }
     }
   }
+  public async pedidosMotivos({ request, auth }: HttpContext) {
+    await auth.check()
+
+    try {
+      // Validar y extraer datos del request
+      const { pedido_id, status, submotivo, observacion, fecha_reprogramacion } = request.only([
+        'pedido_id',
+        'status',
+        'submotivo',
+        'observacion',
+        'fecha_reprogramacion',
+      ])
+
+      // Crear nuevo registro en pedidos_status
+      const nuevoStatus = await PedidoStatus.create({
+        pedido_id,
+        user_id: auth.user!.id,
+        status,
+        submotivo: submotivo || null,
+        observacion: observacion || null,
+        fecha_reprogramacion: fecha_reprogramacion ? fecha_reprogramacion : null,
+      })
+
+      // Actualizar el status del pedido en la tabla pedidos
+      await Pedido.query().where('id', pedido_id).update({ status })
+
+      return {
+        status: 'success',
+        message: 'Estado del pedido actualizado correctamente',
+        data: nuevoStatus,
+      }
+    } catch (error) {
+      console.error(error)
+      return {
+        status: 'error',
+        message: 'Ocurrió un error al guardar el estado del pedido',
+        error: error.message,
+      }
+    }
+  }
   public async senDataPedidosCargadaMasive({ request, auth }: HttpContext) {
     await auth.check()
 

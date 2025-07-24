@@ -88,6 +88,9 @@ router
   .post('/api/pedidosTracking', [PedidosController, 'pedidosTracking'])
   .as('pedido.pedidosTracking')
 router
+  .post('/api/pedidosMotivos', [PedidosController, 'pedidosMotivos'])
+  .as('pedido.pedidosMotivos')
+router
   .post('/api/senDataPedidosCargadaMasive', [PedidosController, 'senDataPedidosCargadaMasive'])
   .as('pedido.senDataPedidosCargadaMasive')
 router

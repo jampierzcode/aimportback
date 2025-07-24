@@ -15,6 +15,15 @@ export default class PedidoStatus extends BaseModel {
   @column()
   declare status: string
 
+  @column()
+  declare submotivo: string
+
+  @column()
+  declare observacion: string
+
+  @column.dateTime()
+  declare fecha_reprogramacion: DateTime
+
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
 
