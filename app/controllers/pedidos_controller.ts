@@ -409,9 +409,7 @@ export default class PedidosController {
         pedido_id: p,
         status: status,
         user_id: auth.user!.id,
-        createdAt: fecha
-          ? DateTime.fromISO(fecha, { zone: 'America/Lima' })
-          : DateTime.now().setZone('America/Lima'),
+        createdAt: fecha ? fecha : DateTime.now().setZone('America/Lima'),
       }))
 
       await PedidoStatus.createMany(pedidosStatus)
