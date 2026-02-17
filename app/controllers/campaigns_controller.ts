@@ -1,24 +1,95 @@
 import Campaign from '#models/campaign'
 import PedidoAsignado from '#models/pedido_asignado'
 import type { HttpContext } from '@adonisjs/core/http'
+import { DateTime } from 'luxon'
 
 export default class CampaignsController {
-  // Listar todos los planes (GET /plans)
-  public async index({}: HttpContext) {
-    const campaigns = await Campaign.query()
+  // Listar campañas (GET /campaigns)
+  // Filtros:
+  //  - cliente_id (proveedor)
+  //  - from, to (YYYY-MM-DD) sobre created_at
+  //  - pedido_status:
+  //      * "finalizada" => todos los pedidos entregados (y tiene pedidos)
+  //      * "faltan"/"pendiente" => existe al menos 1 pedido no entregado
+  //      * cualquier otro => existe al menos 1 pedido con status_pedido.name = X
+  public async index({ request }: HttpContext) {
+    const { cliente_id, clienteId, from, to, pedido_status } = request.qs()
 
-    return campaigns
+    const q = Campaign.query()
+      .preload('cliente')
+      // ✅ Counts SIEMPRE
+      .withCount('pedidos', (pq) => pq.as('totalPedidos'))
+      .withCount('pedidos', (pq) =>
+        pq.whereHas('status_pedido', (sq) => sq.where('name', 'entregado')).as('entregadosCount')
+      )
+      .withCount('pedidos', (pq) =>
+        pq.whereHas('status_pedido', (sq) => sq.whereNot('name', 'entregado')).as('faltantesCount')
+      )
+    console.log(q)
+    // ✅ filtro proveedor (acepta cliente_id o clienteId por si tu front manda camelCase)
+    const cid = cliente_id ?? clienteId
+    if (cid) q.where('cliente_id', Number(cid))
+
+    // ✅ filtro rango fechas (created_at)
+    if (from || to) {
+      const start = from
+        ? DateTime.fromISO(String(from)).startOf('day')
+        : DateTime.fromISO('1970-01-01').startOf('day')
+
+      const end = to ? DateTime.fromISO(String(to)).endOf('day') : DateTime.now().endOf('day')
+
+      q.whereBetween('created_at', [start.toJSDate(), end.toJSDate()])
+    }
+
+    // ✅ filtro por estado de pedidos
+    if (pedido_status) {
+      const ps = String(pedido_status).trim().toLowerCase()
+
+      if (ps === 'finalizada' || ps === 'finalizadas') {
+        // tiene pedidos y todos entregados
+        q.has('pedidos')
+        q.whereDoesntHave('pedidos', (pq) => {
+          pq.whereHas('status_pedido', (sq) => {
+            sq.whereNot('name', 'entregado')
+          })
+        })
+      } else if (ps === 'faltan' || ps === 'pendiente' || ps === 'pendientes') {
+        // existe al menos 1 NO entregado
+        q.whereHas('pedidos', (pq) => {
+          pq.whereHas('status_pedido', (sq) => {
+            sq.whereNot('name', 'entregado')
+          })
+        })
+      } else {
+        // status específico por name
+        q.whereHas('pedidos', (pq) => {
+          pq.whereHas('status_pedido', (sq) => {
+            sq.where('name', String(pedido_status))
+          })
+        })
+      }
+    }
+
+    q.orderBy('created_at', 'desc')
+
+    // ✅ IMPORTANTE: ejecutar el query
+    const rows = await q
+
+    // debug opcional (puedes borrar):
+    // console.log(rows[0]?.toJSON?.())
+
+    return rows
   }
 
-  // Mostrar un plan individual por ID (GET /plans/:id)
+  // Mostrar una campaña (GET /campaigns/:id)
   public async show({ params }: HttpContext) {
     console.log(params)
     const campaign = await Campaign.query()
       .where('id', params.id)
       .preload('pedidos', (pedidoQuery) => {
         pedidoQuery
-          .preload('origen') // sede origen
-          .preload('destino') // sede destino
+          .preload('origen')
+          .preload('destino')
           .preload('status_pedido')
           .preload('multimedia')
           .preload('asignacion', (asignacionQuery) => {
@@ -26,8 +97,10 @@ export default class CampaignsController {
           })
       })
       .first()
+
     return campaign
   }
+
   // Mostrar pedidos asignados a un repartidor de una campaña especifica
   public async campaignAsignadaById({ auth, params }: HttpContext) {
     await auth.check()
@@ -36,7 +109,6 @@ export default class CampaignsController {
     const campaign = await Campaign.query()
       .where('id', params.id)
       .preload('pedidos', (pedidoQuery) => {
-        // Traer solo los pedidos que estén asignados al user
         pedidoQuery
           .whereExists((subquery) => {
             subquery
@@ -53,7 +125,8 @@ export default class CampaignsController {
 
     return campaign
   }
-  // Mostrar campñas asignadas a un usuario repartidor
+
+  // Mostrar campañas asignadas a un usuario repartidor
   public async campaignsAsignadas({ auth }: HttpContext) {
     await auth.check()
     const asignaciones = await PedidoAsignado.query()
@@ -62,36 +135,35 @@ export default class CampaignsController {
         pedidoQuery.preload('campaign')
       })
 
-    // Extraer campañas, evitando duplicados
     const campañasUnicas = [
       ...new Map(
         asignaciones
           .map((a) => a.pedido.campaign)
-          .filter((c) => c) // evitar nulls
-          .map((camp) => [camp.id, camp]) // usar Map para evitar duplicados
+          .filter((c) => c)
+          .map((camp) => [camp.id, camp])
       ).values(),
     ]
 
     return campañasUnicas
   }
 
-  // Crear un nuevo campaign (POST /plans)
+  // Crear campaña (POST /campaigns)
   public async store({ request }: HttpContext) {
-    const data = request.only(['name', 'cliente_id']) // Asume que estos campos existen
+    const data = request.only(['name', 'cliente_id'])
     const campaign = await Campaign.create(data)
     return campaign
   }
 
-  // Actualizar un plan existente (PUT /plans/:id)
+  // Actualizar campaña (PUT /campaigns/:id)
   public async update({ params, request }: HttpContext) {
     const campaign = await Campaign.findOrFail(params.id)
-    const data = request.only(['name', 'cliente_id']) // Asume que estos campos existen
+    const data = request.only(['name', 'cliente_id'])
     campaign.merge(data)
     await campaign.save()
     return campaign
   }
 
-  // Eliminar un campaign (DELETE /plans/:id)
+  // Eliminar campaña (DELETE /campaigns/:id)
   public async destroy({ params }: HttpContext) {
     const campaign = await Campaign.findOrFail(params.id)
     await campaign.delete()

@@ -1,10 +1,11 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column, hasMany, hasOne } from '@adonisjs/lucid/orm'
-import type { HasMany, HasOne } from '@adonisjs/lucid/types/relations'
+import { BaseModel, belongsTo, column, hasMany } from '@adonisjs/lucid/orm'
+import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
 import Pedido from './pedido.js'
 import Cliente from './cliente.js'
 
 export default class Campaign extends BaseModel {
+  public serializeExtras = true
   @column({ isPrimary: true })
   declare id: number
 
@@ -21,10 +22,11 @@ export default class Campaign extends BaseModel {
   declare pedidos: HasMany<typeof Pedido>
 
   // Relación autorreferencial para obtener la sede
-  @hasOne(() => Cliente, {
-    foreignKey: 'cliente_id', // Llave foránea en la tabla users que apunta a sedes
+
+  @belongsTo(() => Cliente, {
+    foreignKey: 'cliente_id',
   })
-  declare cliente: HasOne<typeof Cliente>
+  declare cliente: BelongsTo<typeof Cliente>
 
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
