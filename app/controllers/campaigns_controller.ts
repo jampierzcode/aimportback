@@ -15,22 +15,48 @@ export default class CampaignsController {
   public async index({ request }: HttpContext) {
     const { cliente_id, clienteId, from, to, pedido_status } = request.qs()
 
-    const q = Campaign.query()
-      .preload('cliente')
-      // ✅ Counts SIEMPRE
-      .withCount('pedidos', (pq) => pq.as('totalPedidos'))
-      .withCount('pedidos', (pq) =>
-        pq.whereHas('status_pedido', (sq) => sq.where('name', 'entregado')).as('entregadosCount')
+    const q = Campaign.query().preload('cliente')
+
+    // -----------------------------
+    // Helpers: subquery "último status" por pedido
+    // MySQL: (select ps.status from pedidos_status ps where ps.pedido_id = pedidos.id order by ps.created_at desc, ps.id desc limit 1)
+    // -----------------------------
+    const lastStatusSubquery = (pedidoTableAlias = 'pedidos') => {
+      return q.client
+        .knexQuery() // solo para acceder al "knex" del mismo cliente
+        .client!.queryBuilder()
+        .select('ps.status')
+        .from({ ps: 'pedidos_status' })
+        .whereRaw(`ps.pedido_id = ${pedidoTableAlias}.id`)
+        .orderBy('ps.created_at', 'desc')
+        .orderBy('ps.id', 'desc')
+        .limit(1)
+    }
+
+    // ✅ Counts
+    q.withCount('pedidos', (pq) => {
+      pq.as('totalPedidos')
+    })
+
+    q.withCount('pedidos', (pq) => {
+      // último status == 'entregado'
+      pq.whereRaw(`(${lastStatusSubquery('pedidos').toQuery()}) = ?`, ['entregado']).as(
+        'entregadosCount'
       )
-      .withCount('pedidos', (pq) =>
-        pq.whereHas('status_pedido', (sq) => sq.whereNot('name', 'entregado')).as('faltantesCount')
-      )
-    console.log(q)
-    // ✅ filtro proveedor (acepta cliente_id o clienteId por si tu front manda camelCase)
+    })
+
+    q.withCount('pedidos', (pq) => {
+      // último status != 'entregado'  OR null (sin status todavía) => cuenta como faltante
+      pq.whereRaw(`COALESCE((${lastStatusSubquery('pedidos').toQuery()}), '') <> ?`, [
+        'entregado',
+      ]).as('faltantesCount')
+    })
+
+    // ✅ filtro proveedor
     const cid = cliente_id ?? clienteId
     if (cid) q.where('cliente_id', Number(cid))
 
-    // ✅ filtro rango fechas (created_at)
+    // ✅ filtro rango fechas (campaign created_at)
     if (from || to) {
       const start = from
         ? DateTime.fromISO(String(from)).startOf('day')
@@ -41,43 +67,36 @@ export default class CampaignsController {
       q.whereBetween('created_at', [start.toJSDate(), end.toJSDate()])
     }
 
-    // ✅ filtro por estado de pedidos
+    // ✅ filtro por estado de pedidos (por ÚLTIMO status)
     if (pedido_status) {
       const ps = String(pedido_status).trim().toLowerCase()
 
       if (ps === 'finalizada' || ps === 'finalizadas') {
-        // tiene pedidos y todos entregados
+        // tiene pedidos y TODOS con último status = entregado
         q.has('pedidos')
         q.whereDoesntHave('pedidos', (pq) => {
-          pq.whereHas('status_pedido', (sq) => {
-            sq.whereNot('name', 'entregado')
-          })
+          pq.whereRaw(`COALESCE((${lastStatusSubquery('pedidos').toQuery()}), '') <> ?`, [
+            'entregado',
+          ])
         })
       } else if (ps === 'faltan' || ps === 'pendiente' || ps === 'pendientes') {
-        // existe al menos 1 NO entregado
+        // existe al menos 1 pedido cuyo último status != entregado (o null)
         q.whereHas('pedidos', (pq) => {
-          pq.whereHas('status_pedido', (sq) => {
-            sq.whereNot('name', 'entregado')
-          })
+          pq.whereRaw(`COALESCE((${lastStatusSubquery('pedidos').toQuery()}), '') <> ?`, [
+            'entregado',
+          ])
         })
       } else {
-        // status específico por name
+        // status específico (ej "en reparto"): existe pedido cuyo último status = ps
         q.whereHas('pedidos', (pq) => {
-          pq.whereHas('status_pedido', (sq) => {
-            sq.where('name', String(pedido_status))
-          })
+          pq.whereRaw(`(${lastStatusSubquery('pedidos').toQuery()}) = ?`, [String(pedido_status)])
         })
       }
     }
 
     q.orderBy('created_at', 'desc')
 
-    // ✅ IMPORTANTE: ejecutar el query
     const rows = await q
-
-    // debug opcional (puedes borrar):
-    // console.log(rows[0]?.toJSON?.())
-
     return rows
   }
 
