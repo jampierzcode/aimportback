@@ -16,6 +16,7 @@ import PedidosController from '#controllers/pedidos_controller'
 import CampaignsController from '#controllers/campaigns_controller'
 import UsersController from '#controllers/users_controller'
 import ClientesController from '#controllers/clientes_controller'
+import DashboardController from '#controllers/dashboard_controller'
 
 router.get('/', async () => {
   return {
@@ -28,6 +29,10 @@ router.post('/api/newuser', [AuthController, 'createUser']).as('auth.createUser'
 router.post('/api/login', [AuthController, 'login']).as('auth.login')
 router.delete('/api/logout', [AuthController, 'logout']).as('auth.logout').use(middleware.auth())
 router.get('/api/me', [AuthController, 'me']).as('auth.me')
+router.put('/api/me', [AuthController, 'updateProfile']).as('auth.updateProfile')
+
+// RUTAS PARA dashboard
+router.get('/api/dashboard/stats', [DashboardController, 'stats']).as('dashboard.stats')
 
 // RUTAS PARA roles
 router.get('/api/roles', [RolesController, 'index']).as('role.index')
@@ -43,6 +48,9 @@ router.get('/api/users/:id', [UsersController, 'show']).as('user.show')
 router.post('/api/users', [UsersController, 'store']).as('user.store')
 router.put('/api/users/:id', [UsersController, 'update']).as('user.update')
 router.delete('/api/users/:id', [UsersController, 'destroy']).as('user.destroy')
+router
+  .put('/api/users/:id/password', [UsersController, 'updatePassword'])
+  .as('user.updatePassword')
 router.get('/api/usersSuperadmin', [UsersController, 'usersSuperadmin']).as('user.usersSuperadmin')
 
 // RUTAS PARA sedes

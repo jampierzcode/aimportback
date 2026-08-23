@@ -66,6 +66,59 @@ export default class AuthController {
     return { message: 'success' }
   }
 
+  // Actualiza los datos del propio usuario autenticado (nombre, email y,
+  // opcionalmente, contraseña). No permite tocar rol_id ni sede_id.
+  async updateProfile({ request, auth, response }: HttpContext) {
+    const isLoggedIn = await auth.check()
+    if (!isLoggedIn || !auth.user) {
+      return response.unauthorized({ status: 'error', message: 'No autenticado' })
+    }
+
+    const { name, email, password } = request.only(['name', 'email', 'password'])
+
+    try {
+      const usuario = auth.user
+
+      if (email && email !== usuario.email) {
+        const emailTaken = await User.query()
+          .where('email', email)
+          .whereNot('id', usuario.id)
+          .first()
+        if (emailTaken) {
+          return response.badRequest({
+            status: 'error',
+            message: 'Ese email ya está en uso por otro usuario',
+          })
+        }
+        usuario.email = email
+      }
+
+      if (name) usuario.name = name
+
+      if (password) {
+        if (String(password).length < 8) {
+          return response.badRequest({
+            status: 'error',
+            message: 'La contraseña debe tener al menos 8 caracteres',
+          })
+        }
+        usuario.password = password
+      }
+
+      await usuario.save()
+      await usuario.load('rol')
+      await usuario.load('sede')
+
+      return { status: 'success', message: 'Perfil actualizado correctamente', user: usuario }
+    } catch (error) {
+      return response.badRequest({
+        status: 'error',
+        message: 'No se pudo actualizar el perfil',
+        error: error.message,
+      })
+    }
+  }
+
   async me({ auth }: HttpContext) {
     const data_auth = await auth.check()
     if (data_auth === false) {

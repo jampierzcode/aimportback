@@ -1,8 +1,10 @@
+import { readFile } from 'node:fs/promises'
 import Campaign from '#models/campaign'
 import Pedido from '#models/pedido'
 import PedidoAsignado from '#models/pedido_asignado'
 import PedidoMultimedia from '#models/pedido_multimedia'
 import PedidoStatus from '#models/pedido_status'
+import { buildObjectKey, deleteObject, getSignedObjectUrl, uploadObject } from '#services/s3_service'
 import type { HttpContext } from '@adonisjs/core/http'
 import { DateTime } from 'luxon'
 
@@ -269,35 +271,68 @@ export default class PedidosController {
     }
   }
 
+  // ✅ Sube archivos directamente al bucket S3 y registra cada uno en la BD
   public async pedidosMultimedia({ request }: HttpContext) {
     try {
-      const { files, pedido_id } = request.only(['pedido_id', 'files'])
+      const pedido_id = request.input('pedido_id')
+      const files = request.files('files', {
+        size: '15mb',
+        extnames: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic', 'heif'],
+      })
 
-      if (!pedido_id || !Array.isArray(files) || files.length === 0) {
+      if (!pedido_id || !files || files.length === 0) {
         return {
           status: 'error',
           message: 'Faltan datos o la lista de imagenes está vacía',
         }
       }
-      // 📌 Agregar el ID de la campaña a cada pedido
-      const pedidosMultimedia = files.map((file) => ({
-        pedido_id: pedido_id,
-        url: file.url,
-        type: 'image',
-      }))
+
+      const invalidFile = files.find((file) => !file.isValid)
+      if (invalidFile) {
+        return {
+          status: 'error',
+          message: `Archivo inválido: ${invalidFile.clientName}`,
+          error: invalidFile.errors,
+        }
+      }
+
+      // 📌 Subir cada archivo al bucket S3 y armar el registro a insertar
+      const pedidosMultimedia = await Promise.all(
+        files.map(async (file) => {
+          const buffer = await readFile(file.tmpPath as string)
+          const key = buildObjectKey(pedido_id, file.clientName)
+
+          await uploadObject({
+            key,
+            body: buffer,
+            contentType: `${file.type}/${file.subtype}`,
+          })
+
+          const url = await getSignedObjectUrl(key)
+
+          return {
+            pedido_id: pedido_id,
+            url,
+            key,
+            type: 'image',
+          }
+        })
+      )
 
       // 📌 Insertar pedidos masivamente con createMany
-      await PedidoMultimedia.createMany(pedidosMultimedia)
+      const created = await PedidoMultimedia.createMany(pedidosMultimedia)
 
       return {
         status: 'success',
         message: 'pedidos multimedia successfully',
+        files: created,
       }
     } catch (error) {
+      console.error('Error al subir multimedia:', error)
       return {
         status: 'error',
         message: 'pedidos multimedia no se subieron correctamente',
-        error: error,
+        error: error.message || error,
       }
     }
   }
@@ -765,20 +800,29 @@ export default class PedidosController {
         }
       }
 
-      // 📌 Extraer las URLs directamente del array
-      const urlsToDelete = pedidos
-        .map((item) => item.url)
-        .filter((url): url is string => typeof url === 'string' && url.trim() !== '')
+      // 📌 Extraer los IDs directamente del array
+      const idsToDelete = pedidos
+        .map((item) => Number(item.id))
+        .filter((id) => Number.isFinite(id))
 
-      if (urlsToDelete.length === 0) {
+      if (idsToDelete.length === 0) {
         return {
           status: 'error',
-          message: 'No se encontraron URLs válidas para eliminar',
+          message: 'No se encontraron archivos multimedia válidos para eliminar',
         }
       }
 
-      // 📌 Eliminar de la base de datos por URL
-      const deletedCount = await PedidoMultimedia.query().whereIn('url', urlsToDelete).delete()
+      const multimediaToDelete = await PedidoMultimedia.query().whereIn('id', idsToDelete)
+
+      // 📌 Eliminar los objetos del bucket S3
+      await Promise.all(
+        multimediaToDelete.map((multimedia) =>
+          multimedia.key ? deleteObject(multimedia.key) : Promise.resolve()
+        )
+      )
+
+      // 📌 Eliminar de la base de datos por ID
+      const deletedCount = await PedidoMultimedia.query().whereIn('id', idsToDelete).delete()
 
       return {
         status: 'success',

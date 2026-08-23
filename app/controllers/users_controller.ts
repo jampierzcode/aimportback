@@ -120,6 +120,45 @@ export default class UsersController {
     }
   }
 
+  // Cambiar la contraseña de cualquier usuario. Solo el superadmin puede
+  // hacerlo (PUT /users/:id/password)
+  public async updatePassword({ params, request, auth, response }: HttpContext) {
+    const isLoggedIn = await auth.check()
+    if (!isLoggedIn || !auth.user) {
+      return response.unauthorized({ status: 'error', message: 'No autenticado' })
+    }
+
+    await auth.user.load('rol')
+    if (auth.user.rol?.name !== 'superadmin') {
+      return response.forbidden({
+        status: 'error',
+        message: 'Solo el superadmin puede cambiar contraseñas',
+      })
+    }
+
+    const { password } = request.only(['password'])
+    if (!password || String(password).length < 8) {
+      return response.badRequest({
+        status: 'error',
+        message: 'La contraseña debe tener al menos 8 caracteres',
+      })
+    }
+
+    try {
+      const usuario = await User.findOrFail(params.id)
+      usuario.password = password
+      await usuario.save()
+
+      return { status: 'success', message: 'Contraseña actualizada correctamente' }
+    } catch (error) {
+      return response.badRequest({
+        status: 'error',
+        message: 'No se pudo actualizar la contraseña',
+        error: error.message,
+      })
+    }
+  }
+
   // Eliminar un usuario (DELETE /plans/:id)
   public async destroy({ params }: HttpContext) {
     try {
